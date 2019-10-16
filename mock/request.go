@@ -17,10 +17,10 @@ var (
 	g *gin.Engine
 )
 
-func Init(projectName string) {
+func Init(serverName string) {
 	var err error
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	xunray.Server.Init(projectName)
+	xunray.Server.Init(serverName)
 	g, err = xunray.Server.Start(true)
 	if err != nil {
 		log.Panic(err)

@@ -17,17 +17,19 @@ import (
 )
 
 var (
-	Server _server
+	Server *_server
 )
 
 func init() {
+	Server = new(_server)
 	Server.services = make(map[string]*service)
 	Server.registered = make([]string, 0)
+	Server.middlewares = make([]gin.HandlerFunc, 0)
 }
 
-func (s _server) Init(projectName string) {
+func (s *_server) Init(serverName string) {
 	ctx := context.WithValue(context.TODO(), "project_info", map[string]string{
-		"name": projectName,
+		"name": serverName,
 	})
 
 	var err error
@@ -71,6 +73,7 @@ func (s _server) Init(projectName string) {
 	storage.Init()
 
 	s.errHandler = s._errorHandler
+
 }
 
 type _server struct {
@@ -85,9 +88,11 @@ type _server struct {
 	ctx context.Context
 
 	errHandler func(err error) interface{}
+
+	middlewares []gin.HandlerFunc
 }
 
-func (s _server) Register(name string, hdl interface{}, metaData ...map[string]string) {
+func (s *_server) Register(name string, hdl interface{}, metaData ...map[string]string) {
 	_, found := s.services[name]
 	if found {
 		log.Panic(fmt.Sprintf("service: %s conflict", name))
@@ -101,7 +106,7 @@ func (s _server) Register(name string, hdl interface{}, metaData ...map[string]s
 	s.services[name] = srv
 }
 
-func (s _server) Start(mock ...bool) (*gin.Engine, error) {
+func (s *_server) Start(mock ...bool) (*gin.Engine, error) {
 
 	for _, srv := range s.services {
 		if err := srv.Register(s.address, s.hostname, s.port); err != nil {
@@ -128,7 +133,7 @@ func (s _server) Start(mock ...bool) (*gin.Engine, error) {
 	return s.g, nil
 }
 
-func (s _server) Stop() error {
+func (s *_server) Stop() error {
 	for _, name := range s.registered {
 		s.services[name].Deregister()
 	}
@@ -138,7 +143,7 @@ func (s _server) Stop() error {
 	return nil
 }
 
-func (s _server) _exec(ctx *gin.Context) {
+func (s *_server) _exec(ctx *gin.Context) {
 	name := ctx.Query("service")
 	if name == "" {
 		ctx.JSON(200, s.errHandler(errors.New("missing service's name")))
@@ -166,9 +171,18 @@ func (s _server) _exec(ctx *gin.Context) {
 	ctx.JSON(200, rsp)
 }
 
-func (s _server) _errorHandler(err error) interface{} {
+func (s *_server) _errorHandler(err error) interface{} {
 	return map[string]interface{}{
 		"code":    -1,
 		"message": err.Error(),
+		"result":  map[string]interface{}{},
 	}
+}
+
+func (s *_server) ErrorHandler(fn func(err error) interface{}) {
+	s.errHandler = fn
+}
+
+func (s *_server) Use(middlewares ...gin.HandlerFunc) {
+	s.g.Use(middlewares...)
 }
