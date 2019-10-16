@@ -1,4 +1,4 @@
-module github.com/xinzf/xunray/v1.0.1
+module github.com/xinzf/xunray
 
 go 1.12
 
