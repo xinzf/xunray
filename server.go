@@ -20,6 +20,11 @@ var (
 	Server _server
 )
 
+func init() {
+	Server.services = make(map[string]*service)
+	Server.registered = make([]string, 0)
+}
+
 func (s _server) Init(projectName string) {
 	ctx := context.WithValue(context.TODO(), "project_info", map[string]string{
 		"name": projectName,
@@ -29,9 +34,6 @@ func (s _server) Init(projectName string) {
 	if err = config.Init(ctx); err != nil {
 		panic(err)
 	}
-
-	s.services = make(map[string]*service)
-	s.registered = make([]string, 0)
 
 	s.hostname, err = os.Hostname()
 	if err != nil {
@@ -139,25 +141,25 @@ func (s _server) Stop() error {
 func (s _server) _exec(ctx *gin.Context) {
 	name := ctx.Query("service")
 	if name == "" {
-		ctx.JSON(200,s.errHandler(errors.New("missing service's name")))
+		ctx.JSON(200, s.errHandler(errors.New("missing service's name")))
 		return
 	}
 
 	srv, found := s.services[name]
 	if !found {
-		ctx.JSON(200,s.errHandler(fmt.Errorf("service: %s not found",name)))
+		ctx.JSON(200, s.errHandler(fmt.Errorf("service: %s not found", name)))
 		return
 	}
 
 	rawData, err := ctx.GetRawData()
 	if err != nil {
-		ctx.JSON(200,s.errHandler(fmt.Errorf("failed to get request data,err: %s",err.Error())))
+		ctx.JSON(200, s.errHandler(fmt.Errorf("failed to get request data,err: %s", err.Error())))
 		return
 	}
 
 	rsp, err := srv.Call(ctx, rawData)
 	if err != nil {
-		ctx.JSON(200,s.errHandler(err))
+		ctx.JSON(200, s.errHandler(err))
 		return
 	}
 
@@ -166,7 +168,7 @@ func (s _server) _exec(ctx *gin.Context) {
 
 func (s _server) _errorHandler(err error) interface{} {
 	return map[string]interface{}{
-		"code": -1,
-		"message":err.Error(),
+		"code":    -1,
+		"message": err.Error(),
 	}
 }
