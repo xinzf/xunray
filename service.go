@@ -142,8 +142,8 @@ func (this *service) Register(address, hostname string, port int) error {
 		Address: address,
 		Check: &consul.AgentServiceCheck{
 			HTTP:                           fmt.Sprintf("http://%s:%d?service=%s", address, port, this.name),
-			Timeout:                        time.Duration(2 * time.Second).String(),
-			Interval:                       time.Duration(5 * time.Second).String(),
+			Timeout:                        time.Duration(1 * time.Second).String(),
+			Interval:                       time.Duration(time.Minute).String(),
 			Method:                         http.MethodHead,
 			DeregisterCriticalServiceAfter: "30s",
 		},
