@@ -124,7 +124,8 @@ func (db *Database) Init() {
 
 	dbConfigs := viper.GetStringMap("db")
 	if len(dbConfigs) < 1 {
-		panic("db config is empty...")
+		return
+		//panic("db config is empty...")
 	}
 
 	for key, _ := range dbConfigs {

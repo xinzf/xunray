@@ -5,8 +5,7 @@ const (
 )
 
 func Init() {
-	//DB.Init()
-	//Mongo.Init()
-	//Redis.Init()
-	//Searcher.Init()
+	DB.Init()
+	Mongo.Init()
+	Redis.Init()
 }

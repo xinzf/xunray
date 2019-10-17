@@ -18,7 +18,12 @@ type mongo struct {
 
 func (this *mongo) Init() {
 	var err error
-	this.session, err = mgo.Dial(viper.GetString("mongo.host"))
+	host := viper.GetString("mongo.host")
+	if host == "" {
+		return
+	}
+
+	this.session, err = mgo.Dial(host)
 	if err != nil {
 		logrus.Debugln("Mongodb init failed,err: ", err)
 	}

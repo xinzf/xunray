@@ -17,6 +17,11 @@ type _redis struct {
 }
 
 func (this *_redis) Init() {
+	addr := viper.GetString("redis.addr")
+	if addr == "" {
+		return
+	}
+
 	this.client = redis.NewClient(&redis.Options{
 		Addr:     viper.GetString("redis.addr"),
 		Password: viper.GetString("redis.password"), // no password set
