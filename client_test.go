@@ -1,20 +1,51 @@
 package xunray
 
-import "testing"
+import (
+	"github.com/json-iterator/go"
+	"reflect"
+	"testing"
+)
+
+type Response struct {
+	Code       int                 `json:"code"`
+	Message    string              `json:"message"`
+	Attachment jsoniter.RawMessage `json:"result"`
+}
+
+func (this *Response) Success() bool {
+	if this.Code != 200 {
+		return false
+	}
+	return true
+}
+
+func (this *Response) Error() string {
+	return this.Message
+}
+
+func (this *Response) Convert(target interface{}) error {
+	if reflect.TypeOf(target).Kind() != reflect.Ptr {
+
+	}
+
+	return jsoniter.Unmarshal(this.Attachment, target)
+}
 
 func Test_client_Exec(t *testing.T) {
-	var sendResponse map[string]interface{}
-	var verifyResponse map[string]interface{}
-	reqs := make([]*ServiceRequest, 0)
-	reqs = append(
-		reqs,
-		Client.NewRequest("message.sms.secode.send", nil, &sendResponse),
-		Client.NewRequest("message.sms.secode.verify", nil, &verifyResponse),
-	)
-
-	if err := Client.Call(reqs...);err!=nil{
+	var rsp = new(Response)
+	err := Client.Call("message.sms.secode.send", nil, rsp)
+	if err != nil {
 		t.Error(err)
 	}
 
-	t.Log(sendResponse,verifyResponse)
+	if rsp.Success() == false {
+		t.Error(rsp)
+	}
+
+	data := make(map[string]interface{})
+	if err = rsp.Convert(&data); err != nil {
+		t.Error(err)
+	}
+
+	t.Log(data)
 }

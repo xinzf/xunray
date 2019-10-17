@@ -15,28 +15,28 @@ var Client _client
 type _client struct {
 }
 
-func (_client) NewRequest(serviceName string, body interface{}, rsp interface{}) *ServiceRequest {
-	return &ServiceRequest{
+func (_client) Call(serviceName string, body interface{}, rsp interface{}) (err error) {
+	client := httpclient.New()
+
+	var req = &_serviceRequest{
 		name: serviceName,
 		body: body,
 		rsp:  rsp,
 	}
-}
-
-func (_client) Call(requests ...*ServiceRequest) (err error) {
-	client := httpclient.New()
-
-	reqs := make([]httpclient.Requester, 0)
-	for _, r := range requests {
-		reqs = append(reqs, httpclient.Requester(r))
-	}
-	client.AddRequest(reqs...)
+	client.AddRequest(req)
 
 	err = client.Exec()
+	if err != nil {
+		return err
+	}
+	if req.err != nil {
+		return req.err
+	}
+
 	return
 }
 
-type ServiceRequest struct {
+type _serviceRequest struct {
 	name string
 	body interface{}
 
@@ -45,7 +45,7 @@ type ServiceRequest struct {
 	err error
 }
 
-func (this *ServiceRequest) Prepare() error {
+func (this *_serviceRequest) Prepare() error {
 	if reflect.TypeOf(this.rsp).Kind() != reflect.Ptr {
 		return fmt.Errorf("service.client: %s's response is not pointer", this.name)
 	}
@@ -74,11 +74,11 @@ func (this *ServiceRequest) Prepare() error {
 	return nil
 }
 
-func (this *ServiceRequest) GetURI() string {
+func (this *_serviceRequest) GetURI() string {
 	return this.uri
 }
 
-func (this *ServiceRequest) GetPostData() []byte {
+func (this *_serviceRequest) GetPostData() []byte {
 	if this.body == nil {
 		return nil
 	}
@@ -86,15 +86,15 @@ func (this *ServiceRequest) GetPostData() []byte {
 	b, _ := jsoniter.Marshal(this.body)
 	return b
 }
-func (this *ServiceRequest) GetHeaders() map[string]string {
+func (this *_serviceRequest) GetHeaders() map[string]string {
 	return nil
 }
 
-func (this *ServiceRequest) GetMethod() string {
+func (this *_serviceRequest) GetMethod() string {
 	return "POST"
 }
 
-func (this *ServiceRequest) Handle(rsp []byte, httpStatus int, err error) {
+func (this *_serviceRequest) Handle(rsp []byte, httpStatus int, err error) {
 	if err != nil {
 		this.err = fmt.Errorf("request '%s' failed, err: %s", this.name, err.Error())
 	} else if httpStatus != 200 {
@@ -104,6 +104,6 @@ func (this *ServiceRequest) Handle(rsp []byte, httpStatus int, err error) {
 	}
 }
 
-func (this *ServiceRequest) Error() error {
+func (this *_serviceRequest) Error() error {
 	return this.err
 }
