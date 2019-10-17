@@ -87,7 +87,7 @@ type _server struct {
 	g   *gin.Engine
 	ctx context.Context
 
-	errHandler func(err error) interface{}
+	errHandler func(code int, err error) interface{}
 
 	middlewares []gin.HandlerFunc
 }
@@ -146,40 +146,40 @@ func (s *_server) Stop() error {
 func (s *_server) _exec(ctx *gin.Context) {
 	name := ctx.Query("service")
 	if name == "" {
-		ctx.JSON(200, s.errHandler(errors.New("missing service's name")))
+		ctx.JSON(200, s.errHandler(400, errors.New("missing service's name")))
 		return
 	}
 
 	srv, found := s.services[name]
 	if !found {
-		ctx.JSON(200, s.errHandler(fmt.Errorf("service: %s not found", name)))
+		ctx.JSON(200, s.errHandler(404, fmt.Errorf("service: %s not found", name)))
 		return
 	}
 
 	rawData, err := ctx.GetRawData()
 	if err != nil {
-		ctx.JSON(200, s.errHandler(fmt.Errorf("failed to get request data,err: %s", err.Error())))
+		ctx.JSON(200, s.errHandler(400, fmt.Errorf("failed to get request data,err: %s", err.Error())))
 		return
 	}
 
 	rsp, err := srv.Call(ctx, rawData)
 	if err != nil {
-		ctx.JSON(200, s.errHandler(err))
+		ctx.JSON(200, s.errHandler(500, err))
 		return
 	}
 
 	ctx.JSON(200, rsp)
 }
 
-func (s *_server) _errorHandler(err error) interface{} {
+func (s *_server) _errorHandler(code int, err error) interface{} {
 	return map[string]interface{}{
-		"code":    -1,
+		"code":    code,
 		"message": err.Error(),
 		"result":  map[string]interface{}{},
 	}
 }
 
-func (s *_server) ErrorHandler(fn func(err error) interface{}) {
+func (s *_server) ErrorHandler(fn func(code int, err error) interface{}) {
 	s.errHandler = fn
 }
 
