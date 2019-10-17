@@ -6,51 +6,50 @@ import (
 	"github.com/json-iterator/go"
 	"github.com/xinzf/xunray/httpclient"
 	"math/rand"
+	"reflect"
 	"time"
 )
 
-func NewClient() *_client {
-	return &_client{
-		requests: make([]httpclient.Requester, 0),
-	}
-}
+var Client _client
 
 type _client struct {
-	requests []httpclient.Requester
 }
 
-func (this *_client) Query(serviceName string, body interface{}, fn func(rsp []byte, err error)) *_client {
-	req := &request{
+func (_client) NewRequest(serviceName string, body interface{}, rsp interface{}) *ServiceRequest {
+	return &ServiceRequest{
 		name: serviceName,
 		body: body,
-		fn:   fn,
+		rsp:  rsp,
 	}
-
-	this.requests = append(this.requests, req)
-	return this
 }
 
-func (this *_client) Exec() error {
+func (_client) Call(requests ...*ServiceRequest) (err error) {
 	client := httpclient.New()
-	client.AddRequest(this.requests...)
 
-	if err := client.Exec(); err != nil {
-		return err
+	reqs := make([]httpclient.Requester, 0)
+	for _, r := range requests {
+		reqs = append(reqs, httpclient.Requester(r))
 	}
+	client.AddRequest(reqs...)
 
-	return nil
+	err = client.Exec()
+	return
 }
 
-type request struct {
+type ServiceRequest struct {
 	name string
 	body interface{}
 
 	uri string
-	fn  func(rsp []byte, err error)
+	rsp interface{}
 	err error
 }
 
-func (this *request) Prepare() error {
+func (this *ServiceRequest) Prepare() error {
+	if reflect.TypeOf(this.rsp).Kind() != reflect.Ptr {
+		return fmt.Errorf("service.client: %s's response is not pointer", this.name)
+	}
+
 	client, err := consul.NewClient(consul.DefaultConfig())
 	if err != nil {
 		return err
@@ -75,11 +74,11 @@ func (this *request) Prepare() error {
 	return nil
 }
 
-func (this *request) GetURI() string {
+func (this *ServiceRequest) GetURI() string {
 	return this.uri
 }
 
-func (this *request) GetPostData() []byte {
+func (this *ServiceRequest) GetPostData() []byte {
 	if this.body == nil {
 		return nil
 	}
@@ -87,24 +86,24 @@ func (this *request) GetPostData() []byte {
 	b, _ := jsoniter.Marshal(this.body)
 	return b
 }
-func (this *request) GetHeaders() map[string]string {
+func (this *ServiceRequest) GetHeaders() map[string]string {
 	return nil
 }
 
-func (this *request) GetMethod() string {
+func (this *ServiceRequest) GetMethod() string {
 	return "POST"
 }
 
-func (this *request) Handle(rsp []byte, httpStatus int, err error) {
+func (this *ServiceRequest) Handle(rsp []byte, httpStatus int, err error) {
 	if err != nil {
 		this.err = fmt.Errorf("request '%s' failed, err: %s", this.name, err.Error())
 	} else if httpStatus != 200 {
 		this.err = fmt.Errorf("request '%s' failed, http status: %d", this.name, httpStatus)
+	} else if err = jsoniter.Unmarshal(rsp, this.rsp); err != nil {
+		this.err = fmt.Errorf("request '%s' failed, err: %s", this.name, err.Error())
 	}
-
-	this.fn(rsp, this.err)
 }
 
-func (this *request) Error() error {
+func (this *ServiceRequest) Error() error {
 	return this.err
 }
