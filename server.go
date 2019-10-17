@@ -151,6 +151,15 @@ func (s *_server) _exec(ctx *gin.Context) {
 	}
 
 	srv, found := s.services[name]
+	if ctx.Request.Method == http.MethodHead {
+		if !found {
+			ctx.JSON(404, nil)
+		} else {
+			ctx.JSON(200, nil)
+		}
+		return
+	}
+
 	if !found {
 		ctx.JSON(200, s.errHandler(fmt.Errorf("service: %s not found", name)))
 		return

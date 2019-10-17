@@ -7,7 +7,9 @@ import (
 	consul "github.com/hashicorp/consul/api"
 	"github.com/json-iterator/go"
 	"github.com/sirupsen/logrus"
+	"net/http"
 	"reflect"
+	"time"
 )
 
 func newService(name string, hdl interface{}, metaData ...map[string]string) (*service, error) {
@@ -129,21 +131,22 @@ func (this *service) Register(address, hostname string, port int) error {
 	this.metaData["hostname"] = hostname
 	tags := this.encodeMetadata(this.metaData)
 
-	_id, _ := uuid.NewV4()
-	this.id = _id.String()
+	//_id, _ := uuid.NewV4()
+	//this.id = _id.String()
+	this.id = fmt.Sprintf("%s-%s", hostname, this.name)
 	asr := &consul.AgentServiceRegistration{
 		ID:      this.id,
 		Name:    this.name,
 		Tags:    tags,
 		Port:    port,
 		Address: address,
-		//Check: &consul.AgentServiceCheck{
-		//	HTTP:                           fmt.Sprintf("http://%s:%d?service=%s", address, port, this.name),
-		//	Timeout:                        time.Duration(2*time.Second).String(),
-		//	Interval:                       time.Duration(time.Minute).String(),
-		//	Method:                         http.MethodHead,
-		//	DeregisterCriticalServiceAfter: "30s",
-		//},
+		Check: &consul.AgentServiceCheck{
+			HTTP:                           fmt.Sprintf("http://%s:%d?service=%s", address, port, this.name),
+			Timeout:                        time.Duration(2 * time.Second).String(),
+			Interval:                       time.Duration(5 * time.Second).String(),
+			Method:                         http.MethodHead,
+			DeregisterCriticalServiceAfter: "30s",
+		},
 	}
 
 	if err := this.client.Agent().ServiceRegister(asr); err != nil {
