@@ -12,10 +12,14 @@ import (
 	"time"
 )
 
-func newService(name string, hdl interface{}, metaData ...map[string]string) (*service, error) {
+func newService(name string, hdl interface{},authentication bool, metaData ...map[string]string) (*service, error) {
 	md := make(map[string]string)
 	if len(metaData) > 0 {
 		md = metaData[0]
+	}
+
+	if authentication {
+		md["JWT"] = "TRUE"
 	}
 
 	config := consul.DefaultConfig()
@@ -133,13 +137,14 @@ func (this *service) Register(address, hostname string, port int) error {
 
 	//_id, _ := uuid.NewV4()
 	//this.id = _id.String()
-	this.id = fmt.Sprintf("%s-%s-%d", hostname, this.name,time.Now().UnixNano())
+	this.id = fmt.Sprintf("%s-%s-%d", hostname, this.name, time.Now().UnixNano())
 	asr := &consul.AgentServiceRegistration{
 		ID:      this.id,
 		Name:    this.name,
 		Tags:    tags,
 		Port:    port,
 		Address: address,
+		Meta:    this.metaData,
 		Check: &consul.AgentServiceCheck{
 			HTTP:                           fmt.Sprintf("http://%s:%d?service=%s", address, port, this.name),
 			Timeout:                        time.Duration(1 * time.Second).String(),
