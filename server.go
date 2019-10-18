@@ -107,7 +107,6 @@ func (s *_server) Register(name string, hdl interface{}, metaData ...map[string]
 }
 
 func (s *_server) Start(mock ...bool) (*gin.Engine, error) {
-
 	for _, srv := range s.services {
 		if err := srv.Register(s.address, s.hostname, s.port); err != nil {
 			s.Stop()

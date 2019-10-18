@@ -133,7 +133,7 @@ func (this *service) Register(address, hostname string, port int) error {
 
 	//_id, _ := uuid.NewV4()
 	//this.id = _id.String()
-	this.id = fmt.Sprintf("%s-%s", hostname, this.name)
+	this.id = fmt.Sprintf("%s-%s-%d", hostname, this.name,time.Now().UnixNano())
 	asr := &consul.AgentServiceRegistration{
 		ID:      this.id,
 		Name:    this.name,
