@@ -7,7 +7,6 @@ import (
 	consul "github.com/hashicorp/consul/api"
 	"github.com/json-iterator/go"
 	"github.com/sirupsen/logrus"
-	"net/http"
 	"reflect"
 	"time"
 )
