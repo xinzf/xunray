@@ -92,13 +92,13 @@ type _server struct {
 	middlewares []gin.HandlerFunc
 }
 
-func (s *_server) Register(name string, hdl interface{},authentication bool, metaData ...map[string]string) {
+func (s *_server) Register(name string, hdl interface{}, metaData ...map[string]string) {
 	_, found := s.services[name]
 	if found {
 		log.Panic(fmt.Sprintf("service: %s conflict", name))
 	}
 
-	srv, err := newService(name, hdl,authentication, metaData...)
+	srv, err := newService(name, hdl, metaData...)
 	if err != nil {
 		panic(err)
 	}

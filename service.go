@@ -12,14 +12,10 @@ import (
 	"time"
 )
 
-func newService(name string, hdl interface{},authentication bool, metaData ...map[string]string) (*service, error) {
+func newService(name string, hdl interface{}, metaData ...map[string]string) (*service, error) {
 	md := make(map[string]string)
 	if len(metaData) > 0 {
 		md = metaData[0]
-	}
-
-	if authentication {
-		md["JWT"] = "TRUE"
 	}
 
 	config := consul.DefaultConfig()
