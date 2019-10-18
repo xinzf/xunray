@@ -141,13 +141,13 @@ func (this *service) Register(address, hostname string, port int) error {
 		Port:    port,
 		Address: address,
 		Meta:    this.metaData,
-		Check: &consul.AgentServiceCheck{
-			HTTP:                           fmt.Sprintf("http://%s:%d?service=%s", address, port, this.name),
-			Timeout:                        time.Duration(1 * time.Second).String(),
-			Interval:                       time.Duration(time.Minute).String(),
-			Method:                         http.MethodHead,
-			DeregisterCriticalServiceAfter: "30s",
-		},
+		//Check: &consul.AgentServiceCheck{
+		//	HTTP:                           fmt.Sprintf("http://%s:%d?service=%s", address, port, this.name),
+		//	Timeout:                        time.Duration(1 * time.Second).String(),
+		//	Interval:                       time.Duration(time.Minute).String(),
+		//	Method:                         http.MethodHead,
+		//	DeregisterCriticalServiceAfter: "30s",
+		//},
 	}
 
 	if err := this.client.Agent().ServiceRegister(asr); err != nil {
