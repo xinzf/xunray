@@ -126,3 +126,73 @@ storage.Redis.Client()
 ```go
 storage.Mongo.Use(DBNAME)
 ```
+
+## Httpclient 用法
+```go
+// 先定义一个 struct 实现 httpclient.Requester 接口
+type TestRequest struct {
+}
+
+// 发起请求前要做的准备事情，比如一些前期验证可以在这里做，如果返回 error ，则阻止请求的发送
+func (this *TestRequest) Prepare() error{
+	
+}
+
+// 获取请求地址
+func (this *TestRequest) GetURI() string{
+	
+}
+
+// 获取 POST或者PUT的数据，只有在 method=post|put的时候才有效
+func (this *TestRequest) GetPostData() []byte{
+	
+}
+
+// 获取要发送的头信息
+func (this *TestRequest) GetHeaders() map[string]string{
+	
+}
+
+// 获取请求方式：GET、POST、PUT、DELETE
+func (this *TestRequest) GetMethod() string{
+	
+}
+
+// 响应回调
+func (this *TestRequest) Handle(rsp []byte, httpStatus int, err error){
+	
+}
+
+// 获取请求错误
+func (this *TestRequest) Error() error{
+	
+}
+
+// new 一个 httpclient 对象出来，然后把这个 request 塞给这个 client
+client:=httpclient.New()
+	
+request:=new(TestRequest)
+// 设置该 request
+// ...
+
+client.AddRequest(request)
+if err := client.Exec();err!=nil{
+    // ...
+}
+
+if request.Error() != nil {
+    // ...
+}
+
+// ...
+```
+
+## ServiceClient 用法
+> ServiceClient 是用于请求其他服务的客户端
+```go
+var rsp map[string]interface{}
+if err := xunray.Client.Call("service name",[]byte("body"),&rsp);err!=nil{
+    // ...	
+}	
+fmt.Printf("%+v",rsp)
+```
