@@ -110,3 +110,19 @@ func main() {
 	}
 }
 ```
+
+## Storage 用法
+> Mysql
+```go
+storage.DB.Use(DBNAME)
+```
+
+> Redis
+```go
+storage.Redis.Client()
+```
+
+> Mongo
+```go
+storage.Mongo.Use(DBNAME)
+```
