@@ -56,9 +56,9 @@ func (this *request) _request(req *http.Request) *response {
 
 	body, _ := ioutil.ReadAll(result.Body)
 	log.Println("[Mock] Response:")
-	log.Printf("\tHttpCode: %d", result.StatusCode)
+	log.Printf("HttpCode: %d", result.StatusCode)
 	jsonData, _ := jsoniter.MarshalIndent(body, "", "  ")
-	log.Printf("\tBody: %s", string(jsonData))
+	log.Printf("Body: %s", string(jsonData))
 	return &response{
 		body: body,
 		rsp:  w.Result(),
