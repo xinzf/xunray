@@ -57,7 +57,7 @@ func (this *request) _request(req *http.Request) *response {
 	body, _ := ioutil.ReadAll(result.Body)
 	log.Println("[Mock] Response:")
 	log.Printf("\tHttpCode: %d", result.StatusCode)
-	jsonData, _ := jsoniter.MarshalIndent(body, "", "\t")
+	jsonData, _ := jsoniter.MarshalIndent(body, "", "  ")
 	log.Printf("\tBody: %s", string(jsonData))
 	return &response{
 		body: body,
@@ -74,7 +74,7 @@ func (this *request) _makeRequest(name string, body ...interface{}) *http.Reques
 	log.Printf("\tService: %s", name)
 
 	if len(body) > 0 {
-		mockJsonData, _ := jsoniter.MarshalIndent(body[0], "", "\t")
+		mockJsonData, _ := jsoniter.MarshalIndent(body[0], "", "  ")
 		log.Printf("\tData:\n%s", string(mockJsonData))
 		jsonData, _ := jsoniter.Marshal(body[0])
 		_body := bytes.NewReader(jsonData)
