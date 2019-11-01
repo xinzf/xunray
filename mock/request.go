@@ -17,10 +17,10 @@ var (
 	g *gin.Engine
 )
 
-func Init(serverName string) {
+func Init(serverName string, inits ...xunray.Initialize) {
 	var err error
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	xunray.Server.Init(serverName)
+	xunray.Server.Init(serverName, inits...)
 	g, err = xunray.Server.Start(true)
 	if err != nil {
 		log.Panic(err)
@@ -42,27 +42,6 @@ func (this *request) Query(serviceName string, body ...interface{}) *response {
 	return this._request(req)
 }
 
-//
-//func (this *request) GET(path string) *response {
-//	req := this._makeRequest(path, "get")
-//	return this._request(req)
-//}
-//
-//func (this *request) POST(path string, body ...interface{}) *response {
-//	req := this._makeRequest(path, "post", body...)
-//	return this._request(req)
-//}
-//
-//func (this *request) PUT(path string, body ...interface{}) *response {
-//	req := this._makeRequest(path, "put", body...)
-//	return this._request(req)
-//}
-//
-//func (this *request) DELETE(path string, body ...interface{}) *response {
-//	req := this._makeRequest(path, "delete", body...)
-//	return this._request(req)
-//}
-
 func (this *request) Headers(mp map[string]string) *request {
 	this.headers = mp
 	return this
@@ -76,6 +55,10 @@ func (this *request) _request(req *http.Request) *response {
 	defer result.Body.Close()
 
 	body, _ := ioutil.ReadAll(result.Body)
+	log.Println("[Mock] Response:")
+	log.Printf("\tHttp Code: %d", result.StatusCode)
+	jsonData, _ := jsoniter.MarshalIndent(body, "", "\t")
+	log.Printf("\tBody: %s", string(jsonData))
 	return &response{
 		body: body,
 		rsp:  w.Result(),
@@ -87,7 +70,12 @@ func (this *request) _makeRequest(name string, body ...interface{}) *http.Reques
 	_url := "/?service=" + name
 	var req *http.Request
 
+	log.Println("[Mock] Request:")
+	log.Printf("\tService: %s", name)
+
 	if len(body) > 0 {
+		mockJsonData, _ := jsoniter.MarshalIndent(body[0], "", "\t")
+		log.Printf("\tData:\n%s", string(mockJsonData))
 		jsonData, _ := jsoniter.Marshal(body[0])
 		_body := bytes.NewReader(jsonData)
 		req = httptest.NewRequest("POST", _url, _body)
@@ -103,13 +91,3 @@ func (this *request) _makeRequest(name string, body ...interface{}) *http.Reques
 
 	return req
 }
-
-//func (this *request) parseToStr(mp map[string]interface{}) string {
-//	data := make(url.Values)
-//
-//	for key, val := range mp {
-//		data[key] = []string{fmt.Sprintf("%v", val)}
-//	}
-//
-//	return data.Encode()
-//}
