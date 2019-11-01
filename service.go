@@ -7,6 +7,7 @@ import (
 	consul "github.com/hashicorp/consul/api"
 	"github.com/json-iterator/go"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"reflect"
 	"time"
 )
@@ -18,6 +19,11 @@ func newService(name string, hdl interface{}, metaData ...map[string]string) (*s
 	}
 
 	config := consul.DefaultConfig()
+
+	if addr := viper.GetString("consul.addr"); addr != "" {
+		config.Address = addr
+	}
+
 	client, err := consul.NewClient(config)
 	if err != nil {
 		return &service{}, err

@@ -27,7 +27,9 @@ func init() {
 	Server.middlewares = make([]gin.HandlerFunc, 0)
 }
 
-func (s *_server) Init(serverName string) {
+type Initialize func(ctx context.Context) error
+
+func (s *_server) Init(serverName string, inits ...Initialize) {
 	ctx := context.WithValue(context.TODO(), "project_info", map[string]string{
 		"name": serverName,
 	})
@@ -74,6 +76,11 @@ func (s *_server) Init(serverName string) {
 
 	s.errHandler = s._errorHandler
 
+	for _, fn := range inits {
+		if err := fn(ctx); err != nil {
+			panic(err)
+		}
+	}
 }
 
 type _server struct {

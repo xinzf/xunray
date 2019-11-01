@@ -4,6 +4,7 @@ import (
 	"fmt"
 	consul "github.com/hashicorp/consul/api"
 	"github.com/json-iterator/go"
+	"github.com/spf13/viper"
 	"github.com/xinzf/xunray/httpclient"
 	"math/rand"
 	"reflect"
@@ -50,7 +51,13 @@ func (this *_serviceRequest) Prepare() error {
 		return fmt.Errorf("service.client: %s's response is not pointer", this.name)
 	}
 
-	client, err := consul.NewClient(consul.DefaultConfig())
+	config := consul.DefaultConfig()
+
+	if addr := viper.GetString("consul.addr"); addr != "" {
+		config.Address = addr
+	}
+
+	client, err := consul.NewClient(config)
 	if err != nil {
 		return err
 	}
