@@ -14,7 +14,6 @@ type response struct {
 }
 
 func (this *response) Equal(val interface{}) *response {
-	//fmt.Println(this.rsp.Request.URL)
 	var v interface{}
 	err := jsoniter.Unmarshal(this.body, &v)
 	if err != nil {
