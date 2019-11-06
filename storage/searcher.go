@@ -47,14 +47,14 @@ func (Searcher) Init(name string) *Searcher {
 	//}()
 }
 
-func (this *Searcher) RemoveIndex(applyId int) {
+func (this *Searcher) RemoveIndex(docId int) {
 	go func() {
-		this.engine.RemoveDoc(strconv.Itoa(applyId), true)
+		this.engine.RemoveDoc(strconv.Itoa(docId), true)
 	}()
 }
 
-func (this *Searcher) Indexer(applyId int, text string) {
-	this.engine.Index(strconv.Itoa(applyId), types.DocData{Content: text}, true)
+func (this *Searcher) Indexer(docId int, text string) {
+	this.engine.Index(strconv.Itoa(docId), types.DocData{Content: text}, true)
 	this.engine.Flush()
 }
 
