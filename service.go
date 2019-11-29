@@ -47,7 +47,7 @@ func newService(name string, hdl interface{}, metaData ...map[string]string) (*s
 		return &service{}, fmt.Errorf("服务：%s 入参数量错误", name)
 	}
 
-	if s.handTyp.NumOut() != 1 {
+	if s.handTyp.NumOut() < 1 || s.handTyp.NumOut() > 2 {
 		return &service{}, fmt.Errorf("服务：%s 出参数量错误", name)
 	}
 
@@ -75,10 +75,28 @@ func newService(name string, hdl interface{}, metaData ...map[string]string) (*s
 		return &service{}, fmt.Errorf("服务：%s 的第一个参数不是 *gin.Context", name)
 	}
 
-	s.returnTyp = s.handTyp.Out(0)
-	if s.returnTyp.String() != "error" {
+	s.out.num = s.handTyp.NumOut()
+	if s.handTyp.NumOut() == 1 {
+		s.out.errTpy = s.handTyp.Out(0)
+	} else if s.handTyp.NumOut() == 2 {
+		s.out.errTpy = s.handTyp.Out(0)
+		s.out.codeTpy = s.handTyp.Out(1)
+	}
+
+	if s.out.errTpy.String() != "error" {
 		return &service{}, fmt.Errorf("服务：%s 的出参不是有效的 error", name)
 	}
+
+	if s.handTyp.NumOut() == 2 {
+		if s.out.codeTpy.String() != "int" {
+			return &service{}, fmt.Errorf("服务：%s 的出参不是有效的 int", name)
+		}
+	}
+
+	//s.returnTyp = s.handTyp.Out(0)
+	//if s.returnTyp.String() != "error" {
+	//	return &service{}, fmt.Errorf("服务：%s 的出参不是有效的 error", name)
+	//}
 
 	return s, nil
 }
@@ -94,17 +112,27 @@ type service struct {
 		reqTpy reflect.Type
 		rspTpy reflect.Type
 	}
-	returnTyp reflect.Type
-	metaData  map[string]string
-	client    *consul.Client
+	out struct {
+		num     int
+		errTpy  reflect.Type
+		codeTpy reflect.Type
+	}
+	//returnTyp     reflect.Type
+	metaData map[string]string
+	client   *consul.Client
 }
 
-func (this *service) Call(ctx *gin.Context, rawData []byte) (interface{}, error) {
+func (this *service) Call(ctx *gin.Context, rawData []byte) (interface{}, error, bool, int) {
+
+	var hasCode bool
+	if this.out.num == 2 {
+		hasCode = true
+	}
 
 	reqVal := reflect.New(this.args.reqTpy)
 	if len(rawData) > 0 {
 		if err := jsoniter.Unmarshal(rawData, reqVal.Interface()); err != nil {
-			return nil, err
+			return nil, err, hasCode, 0
 		}
 	}
 
@@ -125,11 +153,18 @@ func (this *service) Call(ctx *gin.Context, rawData []byte) (interface{}, error)
 
 	if values[0].IsNil() == false {
 		er := values[0].Interface().(error)
-		return nil, er
+		return nil, er, hasCode, 0
+	}
+
+	var code int
+	if hasCode {
+		if values[1].IsNil() == false {
+			code = values[1].Interface().(int)
+		}
 	}
 
 	rsp := rspVal.Convert(this.args.rspTpy)
-	return rsp.Interface(), nil
+	return rsp.Interface(), nil, hasCode, code
 }
 
 func (this *service) Register(address, hostname string, port int) error {

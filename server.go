@@ -94,7 +94,7 @@ type _server struct {
 	g   *gin.Engine
 	ctx context.Context
 
-	errHandler func(err error) interface{}
+	errHandler func(err error, code ...int) interface{}
 
 	middlewares []gin.HandlerFunc
 }
@@ -177,24 +177,32 @@ func (s *_server) _exec(ctx *gin.Context) {
 		return
 	}
 
-	rsp, err := srv.Call(ctx, rawData)
+	rsp, err, hasCode, code := srv.Call(ctx, rawData)
 	if err != nil {
-		ctx.JSON(200, s.errHandler(err))
+		if hasCode {
+			ctx.JSON(200, s.errHandler(err, code))
+		} else {
+			ctx.JSON(200, s.errHandler(err))
+		}
 		return
 	}
 
 	ctx.JSON(200, rsp)
 }
 
-func (s *_server) _errorHandler(err error) interface{} {
+func (s *_server) _errorHandler(err error, code ...int) interface{} {
+	var c = -1000
+	if len(code) > 0 {
+		c = code[0]
+	}
 	return map[string]interface{}{
-		"code":    -1,
+		"code":    c,
 		"message": err.Error(),
 		"result":  map[string]interface{}{},
 	}
 }
 
-func (s *_server) ErrorHandler(fn func(err error) interface{}) {
+func (s *_server) ErrorHandler(fn func(err error,code ...int) interface{}) {
 	s.errHandler = fn
 }
 
