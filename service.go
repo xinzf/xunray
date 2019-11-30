@@ -151,20 +151,21 @@ func (this *service) Call(ctx *gin.Context, rawData []byte) (interface{}, error,
 		})
 	}
 
+	var (
+		er   error
+		code int
+	)
 	if values[0].IsNil() == false {
-		er := values[0].Interface().(error)
-		return nil, er, hasCode, 0
-	}
-
-	var code int
-	if hasCode {
-		if values[1].IsNil() == false {
+		er = values[0].Interface().(error)
+		if hasCode {
 			code = values[1].Interface().(int)
 		}
+
+		return nil, er, hasCode, code
 	}
 
 	rsp := rspVal.Convert(this.args.rspTpy)
-	return rsp.Interface(), nil, hasCode, code
+	return rsp.Interface(), er, hasCode, code
 }
 
 func (this *service) Register(address, hostname string, port int) error {

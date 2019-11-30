@@ -195,14 +195,15 @@ func (s *_server) _errorHandler(err error, code ...int) interface{} {
 	if len(code) > 0 {
 		c = code[0]
 	}
-	return map[string]interface{}{
+	mp := map[string]interface{}{
 		"code":    c,
 		"message": err.Error(),
 		"result":  map[string]interface{}{},
 	}
+	return mp
 }
 
-func (s *_server) ErrorHandler(fn func(err error,code ...int) interface{}) {
+func (s *_server) ErrorHandler(fn func(err error, code ...int) interface{}) {
 	s.errHandler = fn
 }
 
