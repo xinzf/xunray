@@ -171,10 +171,18 @@ func (s *_server) _exec(ctx *gin.Context) {
 		return
 	}
 
-	rawData, err := ctx.GetRawData()
-	if err != nil {
-		ctx.JSON(200, s.errHandler(fmt.Errorf("failed to get request data,err: %s", err.Error())))
-		return
+	var (
+		rawData []byte
+		err     error
+	)
+	rawData = make([]byte, 0)
+
+	if ctx.Request.MultipartForm == nil {
+		rawData, err = ctx.GetRawData()
+		if err != nil {
+			ctx.JSON(200, s.errHandler(fmt.Errorf("failed to get request data,err: %s", err.Error())))
+			return
+		}
 	}
 
 	rsp, err, hasCode, code := srv.Call(ctx, rawData)
