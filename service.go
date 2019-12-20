@@ -132,7 +132,6 @@ func (this *service) Call(ctx *gin.Context, rawData []byte) (interface{}, error,
 	reqVal := reflect.New(this.args.reqTpy)
 	if len(rawData) > 0 {
 		if err := jsoniter.Unmarshal(rawData, reqVal.Interface()); err != nil {
-			logrus.Errorln("JSON,", err.Error())
 			return nil, err, hasCode, 0
 		}
 	}
