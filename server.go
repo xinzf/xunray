@@ -171,7 +171,7 @@ func (s *_server) _exec(ctx *gin.Context) {
 		return
 	}
 
-	log.Debugln("CONTENTTYPE:",ctx.ContentType())
+	log.Debugln("CONTENTTYPE:", ctx.ContentType())
 
 	var (
 		rawData []byte
@@ -180,9 +180,9 @@ func (s *_server) _exec(ctx *gin.Context) {
 	rawData = make([]byte, 0)
 
 	log.Debugln("Before MultipartForm")
-	log.Debugf("MultipartForm: %+v\n",ctx.Request.MultipartForm)
+	log.Debugf("MultipartForm: %+v\n", ctx.Request.MultipartForm)
 
-	if ctx.Request.MultipartForm == nil {
+	if ctx.ContentType() == gin.MIMEJSON {
 		rawData, err = ctx.GetRawData()
 		if err != nil {
 			ctx.JSON(200, s.errHandler(fmt.Errorf("failed to get request data,err: %s", err.Error())))
@@ -190,7 +190,7 @@ func (s *_server) _exec(ctx *gin.Context) {
 		}
 	}
 
-	//log.Debugf("RawData: %+v\n",rawData)
+	log.Debugf("RawData: %+v\n",rawData)
 
 	rsp, err, hasCode, code := srv.Call(ctx, rawData)
 	if err != nil {
