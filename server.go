@@ -177,6 +177,9 @@ func (s *_server) _exec(ctx *gin.Context) {
 	)
 	rawData = make([]byte, 0)
 
+	log.Debugln("Before MultipartForm")
+	log.Debugf("MultipartForm: %+v\n",ctx.Request.MultipartForm)
+
 	if ctx.Request.MultipartForm == nil {
 		rawData, err = ctx.GetRawData()
 		if err != nil {
@@ -184,6 +187,8 @@ func (s *_server) _exec(ctx *gin.Context) {
 			return
 		}
 	}
+
+	log.Debugf("RawData: %+v\n",rawData)
 
 	rsp, err, hasCode, code := srv.Call(ctx, rawData)
 	if err != nil {
