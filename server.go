@@ -171,6 +171,8 @@ func (s *_server) _exec(ctx *gin.Context) {
 		return
 	}
 
+	log.Debugln("CONTENTTYPE:",ctx.ContentType())
+
 	var (
 		rawData []byte
 		err     error
@@ -188,7 +190,7 @@ func (s *_server) _exec(ctx *gin.Context) {
 		}
 	}
 
-	log.Debugf("RawData: %+v\n",rawData)
+	//log.Debugf("RawData: %+v\n",rawData)
 
 	rsp, err, hasCode, code := srv.Call(ctx, rawData)
 	if err != nil {
