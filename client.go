@@ -2,6 +2,7 @@ package xunray
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	consul "github.com/hashicorp/consul/api"
 	"github.com/json-iterator/go"
 	"github.com/spf13/viper"
@@ -94,7 +95,9 @@ func (this *_serviceRequest) GetPostData() []byte {
 	return b
 }
 func (this *_serviceRequest) GetHeaders() map[string]string {
-	return nil
+	return map[string]string{
+		"Content-Type": gin.MIMEJSON,
+	}
 }
 
 func (this *_serviceRequest) GetMethod() string {
