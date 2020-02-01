@@ -211,10 +211,11 @@ func (this *service) Register(address, hostname string, port int) error {
 			this.heartbeatTicker.Stop()
 		}()
 
+		req:=gorequest.New().Timeout(time.Second).SetDebug(true)
 		for {
 			select {
 			case <-this.heartbeatTicker.C:
-				_, _, errs := gorequest.New().Timeout(time.Second).SetDebug(true).Put(checkURL).End()
+				_, _, errs := req.Clone().Put(checkURL).End()
 				if len(errs) > 0 {
 					for _, err := range errs {
 						logrus.Errorln(err)
