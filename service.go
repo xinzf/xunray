@@ -1,15 +1,21 @@
 package xunray
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid"
 	consul "github.com/hashicorp/consul/api"
 	"github.com/json-iterator/go"
+	"github.com/parnurzeal/gorequest"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"reflect"
 	"time"
+)
+
+const (
+	CHECK_TTL = 10
 )
 
 func newService(name string, hdl interface{}, metaData ...map[string]string) (*service, error) {
@@ -93,11 +99,7 @@ func newService(name string, hdl interface{}, metaData ...map[string]string) (*s
 		}
 	}
 
-	//s.returnTyp = s.handTyp.Out(0)
-	//if s.returnTyp.String() != "error" {
-	//	return &service{}, fmt.Errorf("服务：%s 的出参不是有效的 error", name)
-	//}
-
+	s.ctx, s.cancel = context.WithCancel(context.TODO())
 	return s, nil
 }
 
@@ -117,9 +119,12 @@ type service struct {
 		errTpy  reflect.Type
 		codeTpy reflect.Type
 	}
-	//returnTyp     reflect.Type
 	metaData map[string]string
 	client   *consul.Client
+
+	heartbeatTicker *time.Ticker
+	ctx             context.Context
+	cancel          context.CancelFunc
 }
 
 func (this *service) Call(ctx *gin.Context, rawData []byte) (interface{}, error, bool, int) {
@@ -172,8 +177,6 @@ func (this *service) Register(address, hostname string, port int) error {
 	this.metaData["hostname"] = hostname
 	tags := this.encodeMetadata(this.metaData)
 
-	//_id, _ := uuid.NewV4()
-	//this.id = _id.String()
 	this.id = fmt.Sprintf("%s-%s-%d", hostname, this.name, time.Now().UnixNano())
 	asr := &consul.AgentServiceRegistration{
 		ID:      this.id,
@@ -182,13 +185,12 @@ func (this *service) Register(address, hostname string, port int) error {
 		Port:    port,
 		Address: address,
 		Meta:    this.metaData,
-		//Check: &consul.AgentServiceCheck{
-		//	HTTP:                           fmt.Sprintf("http://%s:%d?service=%s", address, port, this.name),
-		//	Timeout:                        time.Duration(1 * time.Second).String(),
-		//	Interval:                       time.Duration(time.Minute).String(),
-		//	Method:                         http.MethodHead,
-		//	DeregisterCriticalServiceAfter: "30s",
-		//},
+		Check: &consul.AgentServiceCheck{
+			CheckID:                        fmt.Sprintf("service:%s", this.id),
+			DeregisterCriticalServiceAfter: "30s",
+			TTL:                            fmt.Sprintf("%ds", CHECK_TTL),
+			Notes:                          fmt.Sprintf("Check service: %s", this.name),
+		},
 	}
 
 	if err := this.client.Agent().ServiceRegister(asr); err != nil {
@@ -196,11 +198,41 @@ func (this *service) Register(address, hostname string, port int) error {
 		return err
 	}
 
+	this.heartbeatTicker = time.NewTicker(time.Duration(CHECK_TTL-1) * time.Second)
+
+	addr := viper.GetString("consul.addr")
+	if addr == "" {
+		addr = "http://127.0.0.1:8500"
+	}
+	checkURL := fmt.Sprintf("%s/v1/agent/check/pass/%s", addr, fmt.Sprintf("service:%s", this.id))
+
+	go func() {
+		defer func() {
+			this.heartbeatTicker.Stop()
+		}()
+
+		for {
+			select {
+			case <-this.heartbeatTicker.C:
+				_, _, errs := gorequest.New().Timeout(time.Second).SetDebug(true).Put(checkURL).End()
+				if len(errs) > 0 {
+					for _, err := range errs {
+						logrus.Errorln(err)
+					}
+				}
+			case <-this.ctx.Done():
+				return
+			}
+		}
+	}()
+
 	logrus.Infof("service: %s register success\n", this.name)
+
 	return nil
 }
 
 func (this *service) Deregister() error {
+	this.cancel()
 	err := this.client.Agent().ServiceDeregister(this.id)
 	if err != nil {
 		logrus.Errorf("service: %s deregister failed,%s\n", this.name, err.Error())
