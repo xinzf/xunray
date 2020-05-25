@@ -2,6 +2,7 @@ package xunray
 
 import (
 	"fmt"
+	"github.com/cstockton/go-conv"
 	"github.com/gin-gonic/gin"
 	consul "github.com/hashicorp/consul/api"
 	"github.com/json-iterator/go"
@@ -17,13 +18,23 @@ var Client _client
 type _client struct {
 }
 
-func (_client) Call(serviceName string, body interface{}, rsp interface{}) (err error) {
+func (_client) Call(serviceName string, body interface{}, rsp interface{}, headers ...map[string]interface{}) (err error) {
 	client := httpclient.New()
 
 	var req = &_serviceRequest{
 		name: serviceName,
 		body: body,
 		rsp:  rsp,
+		headers: map[string]string{
+			"Content-Type": gin.MIMEJSON,
+		},
+	}
+
+	if len(headers) > 0 {
+		for k, v := range headers[0] {
+			vv, _ := conv.String(v)
+			req.headers[k] = vv
+		}
 	}
 	client.AddRequest(req)
 
@@ -45,6 +56,8 @@ type _serviceRequest struct {
 	uri string
 	rsp interface{}
 	err error
+
+	headers map[string]string
 }
 
 func (this *_serviceRequest) Prepare() error {
@@ -95,9 +108,7 @@ func (this *_serviceRequest) GetPostData() []byte {
 	return b
 }
 func (this *_serviceRequest) GetHeaders() map[string]string {
-	return map[string]string{
-		"Content-Type": gin.MIMEJSON,
-	}
+	return this.headers
 }
 
 func (this *_serviceRequest) GetMethod() string {

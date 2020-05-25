@@ -3,7 +3,7 @@ module github.com/xinzf/xunray
 go 1.13
 
 require (
-	github.com/elazarl/goproxy v0.0.0-20191011121108-aa519ddbe484 // indirect
+	github.com/cstockton/go-conv v0.0.0-20170524002450-66a2b2ba36e1
 	github.com/gin-contrib/sse v0.0.0-20190301062529-5545eab6dad3 // indirect
 	github.com/gin-gonic/gin v1.3.0
 	github.com/go-ego/gse v0.0.0-20191031151436-7129ddefdf69 // indirect
@@ -19,10 +19,8 @@ require (
 	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/parnurzeal/gorequest v0.2.16
 	github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5
 	github.com/sirupsen/logrus v1.4.2
-	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spf13/viper v1.3.2
 	github.com/toolkits/file v0.0.0-20160325033739-a5b3c5147e07
 	github.com/toolkits/net v0.0.0-20160910085801-3f39ab6fe3ce
@@ -30,6 +28,5 @@ require (
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	gopkg.in/yaml.v2 v2.2.4 // indirect
-	moul.io/http2curl v1.0.0 // indirect
 	xorm.io/core v0.7.2
 )
